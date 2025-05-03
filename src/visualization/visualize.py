@@ -1,137 +1,76 @@
-import plotly.graph_objects as go
+# src/visualization/visualize.py
+import matplotlib.pyplot as plt
 import numpy as np
-import torch
+# Consider using pyvista for 3D plots if needed
 
-def plot_3d_temperature_field(model, domain_size=(1.0, 1.0, 1.0), power=50.0, resolution=20):
-    """
-    绘制3D温度场分布
-    
-    参数:
-    model: 训练好的PINN模型
-    domain_size: 空间域大小
-    power: 加热功率
-    resolution: 每个维度的网格点数
-    """
-    # 创建网格点
-    x = np.linspace(0, domain_size[0], resolution)
-    y = np.linspace(0, domain_size[1], resolution)
-    z = np.linspace(0, domain_size[2], resolution)
-    X, Y, Z = np.meshgrid(x, y, z)
-    
-    # 准备输入数据
-    points = np.vstack([X.flatten(), Y.flatten(), Z.flatten()]).T
-    power_input = np.full((points.shape[0], 1), power)
-    
-    # 转换为PyTorch张量
-    points_tensor = torch.FloatTensor(points)
-    power_tensor = torch.FloatTensor(power_input)
-    
-    # 使用模型预测温度
-    model.eval()
-    with torch.no_grad():
-        temperatures = model(
-            points_tensor[:, 0:1],
-            points_tensor[:, 1:2],
-            points_tensor[:, 2:3],
-            power_tensor
-        )
-    
-    # 重塑为3D网格
-    temp_grid = temperatures.numpy().reshape(resolution, resolution, resolution)
-    
-    # 创建3D等值面图
-    fig = go.Figure(data=go.Isosurface(
-        x=X.flatten(),
-        y=Y.flatten(),
-        z=Z.flatten(),
-        value=temp_grid.flatten(),
-        isomin=temp_grid.min(),
-        isomax=temp_grid.max(),
-        colorscale='Jet',
-        caps=dict(x_show=False, y_show=False, z_show=False)
-    ))
-    
-    fig.update_layout(
-        scene=dict(
-            xaxis_title='X',
-            yaxis_title='Y',
-            zaxis_title='Z'
-        ),
-        title=f'3D Temperature Field (Power: {power}W)'
-    )
-    
-    return fig
+def plot_loss_history(history, save_path='reports/figures/loss_curve.png'):
+    """Plots the training loss history."""
+    plt.figure(figsize=(10, 6))
+    plt.plot(history['loss'], label='Total Loss')
+    plt.plot(history['loss_pde'], label='PDE Loss', alpha=0.7)
+    plt.plot(history['loss_ic'], label='IC Loss', alpha=0.7)
+    plt.plot(history['loss_bc'], label='BC Loss', alpha=0.7)
+    plt.xlabel('Epoch')
+    plt.ylabel('Log Loss')
+    plt.yscale('log')
+    plt.title('Training Loss History')
+    plt.legend()
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    # Ensure directory exists
+    import os
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path)
+    plt.close()
+    print(f"Loss curve saved to {save_path}")
 
-def plot_temperature_slice(model, plane='xy', position=0.5, domain_size=(1.0, 1.0, 1.0), 
-                         power=50.0, resolution=50):
-    """
-    绘制温度场的2D切片图
-    
-    参数:
-    model: 训练好的PINN模型
-    plane: 切片平面 ('xy', 'yz', 或 'xz')
-    position: 切片位置（归一化到[0,1]）
-    domain_size: 空间域大小
-    power: 加热功率
-    resolution: 每个维度的网格点数
-    """
-    # 创建2D网格
-    if plane == 'xy':
-        x = np.linspace(0, domain_size[0], resolution)
-        y = np.linspace(0, domain_size[1], resolution)
-        X, Y = np.meshgrid(x, y)
-        Z = np.full_like(X, position * domain_size[2])
-    elif plane == 'yz':
-        y = np.linspace(0, domain_size[1], resolution)
-        z = np.linspace(0, domain_size[2], resolution)
-        Y, Z = np.meshgrid(y, z)
-        X = np.full_like(Y, position * domain_size[0])
-    else:  # 'xz'
-        x = np.linspace(0, domain_size[0], resolution)
-        z = np.linspace(0, domain_size[2], resolution)
-        X, Z = np.meshgrid(x, z)
-        Y = np.full_like(X, position * domain_size[1])
-    
-    # 准备输入数据
-    points = np.vstack([X.flatten(), Y.flatten(), Z.flatten()]).T
-    power_input = np.full((points.shape[0], 1), power)
-    
-    # 转换为PyTorch张量
-    points_tensor = torch.FloatTensor(points)
-    power_tensor = torch.FloatTensor(power_input)
-    
-    # 使用模型预测温度
-    model.eval()
-    with torch.no_grad():
-        temperatures = model(
-            points_tensor[:, 0:1],
-            points_tensor[:, 1:2],
-            points_tensor[:, 2:3],
-            power_tensor
-        )
-    
-    # 重塑为2D网格
-    temp_grid = temperatures.numpy().reshape(resolution, resolution)
-    
-    # 创建热力图
-    fig = go.Figure(data=go.Heatmap(
-        z=temp_grid,
-        colorscale='Jet',
-        colorbar=dict(title='Temperature')
-    ))
-    
-    # 设置坐标轴标签
-    if plane == 'xy':
-        xlabel, ylabel = 'X', 'Y'
-    elif plane == 'yz':
-        xlabel, ylabel = 'Y', 'Z'
-    else:
-        xlabel, ylabel = 'X', 'Z'
-    
-    fig.update_layout(
-        xaxis_title=xlabel,
-        yaxis_title=ylabel,
-        title=f'Temperature Field {plane.upper()}-Plane (Position: {position:.2f})'
-    )
-    
-    return fig
+
+def plot_temperature_slice(u_pred_grid, grid_shape, slice_dim='z', slice_index=None, time_index=-1, T_surr_eval=None, save_path='reports/figures/temp_slice.png'):
+    """Plots a 2D slice of the 3D+T temperature field."""
+    nx, ny, nz, nt = grid_shape
+    if slice_index is None:
+        slice_index = nz // 2 if slice_dim == 'z' else (ny // 2 if slice_dim == 'y' else nx // 2)
+
+    plt.figure(figsize=(8, 6))
+    if slice_dim == 'z':
+        data_slice = u_pred_grid[:, :, slice_index, time_index]
+        x_label, y_label = 'X', 'Y'
+        x_extent, y_extent = [0, L], [0, L]
+        title = f'Temperature Slice at Z = {slice_index / (nz - 1) * L:.2f}, '
+    elif slice_dim == 'y':
+        data_slice = u_pred_grid[:, slice_index, :, time_index]
+        x_label, y_label = 'X', 'Z'
+        x_extent, y_extent = [0, L], [0, L]
+        title = f'Temperature Slice at Y = {slice_index / (ny - 1) * L:.2f}, '
+    else: # slice_dim == 'x'
+        data_slice = u_pred_grid[slice_index, :, :, time_index]
+        x_label, y_label = 'Y', 'Z'
+        x_extent, y_extent = [0, L], [0, L]
+        title = f'Temperature Slice at X = {slice_index / (nx - 1) * L:.2f}, '
+
+    title += f't = {time_index / (nt - 1) * T_MAX:.1f}s'
+    if T_surr_eval is not None:
+         title += f', T_surr={T_surr_eval:.1f}K'
+
+    im = plt.imshow(data_slice.T, origin='lower', extent=x_extent + y_extent, cmap='inferno', aspect='equal') # Transpose needed? Check orientation
+    plt.colorbar(im, label='Temperature (K)')
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.tight_layout()
+     # Ensure directory exists
+    import os
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path)
+    plt.close()
+    print(f"Temperature slice saved to {save_path}")
+
+# Add other visualization functions (e.g., using pyvista for 3D)
+
+# Example usage (typically called from main.py or notebooks)
+if __name__ == '__main__':
+     # Example: Load dummy prediction data and plot slice
+     # This part would normally get data from evaluate_model.py
+     shape = (10, 10, 10, 5)
+     dummy_preds = np.random.rand(*shape) * 700 + 300 # Random temps 300-1000K
+     dummy_T_surr = 700.0
+     plot_temperature_slice(dummy_preds, shape, slice_dim='z', T_surr_eval=dummy_T_surr, save_path='../../reports/figures/dummy_temp_slice.png') # Adjust path
