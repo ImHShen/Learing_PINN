@@ -1,0 +1,62 @@
+# --- Execution Control ---
+run_training: True
+run_evaluation: True
+run_visualization: True
+plot_loss: True
+
+# --- Physical Problem Definition ---
+problem:
+  L: 1.0         # Cube side length (m)
+  T0_K: 293.15   # Initial temperature (K)
+  T_max: 1000.0  # Max simulation time (s)
+  T_surr_min: 293.15 # Min surrounding temperature (K) - for sampling range
+  T_surr_max: 1000.0 # Max surrounding temperature (K) - for sampling range
+
+# --- Material Properties ---
+material:
+  alpha: 1.0e-5  # Thermal diffusivity (m^2/s)
+  k: 200.0       # Thermal conductivity (W/m K)
+  epsilon: 0.8   # Surface emissivity
+
+# --- Physical Constants ---
+constants:
+  sigma: 5.67e-8 # Stefan-Boltzmann constant (W/m^2 K^4)
+
+# --- Training Hyperparameters & Settings ---
+training:
+  layers: [5, 128, 128, 128, 128, 128, 128, 1] # NN Architecture [Input, Hidden..., Output]
+  learning_rate: 0.0001
+  epochs: 50000
+  batch_sizes:
+    pde: 4096
+    ic: 1024
+    bc_face: 512 # Points per face for BC
+  optimizer: Adam
+  scheduler_step_size: 5000
+  scheduler_gamma: 0.7
+  log_frequency: 500 # Print logs every N epochs
+  # Optional: Loss weights
+  # lambda_pde: 1.0
+  # lambda_ic: 10.0
+  # lambda_bc: 5.0
+
+# --- Evaluation Parameters ---
+evaluation:
+  T_surr_eval: 800.0 # K - The specific "power level" T_surr to evaluate
+  grid:
+    nx: 20
+    ny: 20
+    nz: 20
+    nt: 21 # Number of time steps including t=0
+
+# --- Visualization Parameters ---
+visualization:
+  slice_dim: 'z' # Dimension to slice ('x', 'y', or 'z')
+  slice_index: null # Index along slice_dim (null uses center)
+  time_index: -1 # Index for time (-1 for final time T_max)
+
+# --- File Paths (Relative to project root) ---
+paths:
+  model_save: 'models/pinn_3d_rad.pth'
+  loss_curve: 'reports/figures/loss_curve.png'
+  temp_slice_base: 'reports/figures/temperature_slice' # Base name for slice plots

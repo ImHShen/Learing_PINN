@@ -1,7 +1,16 @@
-torch>=2.0.0
-numpy>=1.21.0
-matplotlib>=3.4.0
-scipy>=1.7.0
-tqdm>=4.62.0
-pandas>=1.3.0
-plotly>=5.1.0
+# Core ML and numerical libraries
+torch>=1.10.0 # PyTorch for neural networks and autograd
+numpy>=1.19.0 # For numerical operations and array handling
+
+# Configuration file handling
+pyyaml>=5.0   # For reading the config.yaml file
+
+# Plotting and Visualization
+matplotlib>=3.3.0 # For generating 2D plots (loss curves, slices)
+
+# Optional: For advanced 3D visualization (uncomment if used)
+# pyvista>=0.30.0
+# vtk>=9.0.0
+
+# Optional: For progress bars (uncomment if used)
+# tqdm>=4.50.0

@@ -1,80 +1,123 @@
-# 3D温度场PINN模型训练项目
+# PINN for 3D Radiative Heating of a Cube
 
-这个项目使用Physics-Informed Neural Networks (PINN)来学习三维温度场分布。该模型考虑了加热板的功率大小和热导率的影响。
+## Description
 
-## 项目结构
+This project implements a Physics-Informed Neural Network (PINN) using PyTorch to model and predict the 3D transient temperature field $u(x, y, z, t)$ inside a unit cube. The cube is initially at a uniform temperature and is heated by uniform thermal radiation from its surroundings.
+
+The key features include:
+
+* Solving the transient heat equation within the cube.
+* Applying a non-linear radiative boundary condition on all faces.
+* Parameterizing the model with the surrounding radiative temperature ($T_{surr}$) as an input, allowing prediction for different heating power levels with a single trained model.
+
+## Project Structure
+
+The project follows a standard machine learning project structure:
 
 ```
-.
-├── data/               # 数据目录
-│   ├── external/      # 外部数据
-│   ├── processed/     # 处理后的数据
-│   └── raw/          # 原始数据
-├── notebooks/         # Jupyter notebooks
-├── src/              # 源代码
-│   ├── data/         # 数据处理相关代码
-│   ├── features/     # 特征工程相关代码
-│   ├── models/       # 模型定义和训练代码
-│   ├── utils/        # 工具函数
-│   └── visualization/# 可视化相关代码
-├── tests/            # 测试代码
-├── main.py           # 主程序
-└── requirements.txt  # 项目依赖
+LEARNING_PINN
+├── data/                     # Data files (raw, processed, external)
+├── models/                   # Saved trained model files (e.g., .pth)
+├── notebooks/                # Jupyter notebooks for exploration
+├── reports/                  # Generated reports, figures, summaries
+│   └── figures/              # Saved plots and visualizations
+├── src/                      # Main source code directory
+│   ├── __init__.py           # Makes 'src' a Python package
+│   ├── config/               # Configuration related code/files
+│   │   ├── __init__.py       # Makes 'src.config' a package
+│   │   └── config.yaml     # <--- Configuration file MOVED HERE
+│   ├── data/                 # Data loading/processing scripts (if needed)
+│   │   └── __init__.py
+│   ├── models/               # Model definition, training, evaluation scripts
+│   │   ├── __init__.py
+│   │   ├── model_definition.py
+│   │   ├── train_model.py
+│   │   └── evaluate_model.py
+│   ├── utils/                # Utility functions and helpers
+│   │   ├── __init__.py
+│   │   ├── helper_functions.py
+│   │   └── pytorch_utils.py  # For PyTorch specific utils like device setting
+│   └── visualization/        # Visualization scripts
+│       ├── __init__.py
+│       └── visualize.py
+├── tests/                    # Unit tests
+├── .gitignore                # Git ignore rules
+├── README.md                 # Project description and setup guide
+├── requirements.txt          # Project dependencies
+└── main.py                   # Main script to execute the pipeline
 ```
+## Setup and Installation
 
-## 环境要求
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repository-url>
+    cd ml-project-name
+    ```
 
-确保您的系统已安装Python 3.7+，然后安装所需依赖：
+2.  **Create a virtual environment (Recommended):**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    ```
+
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+    *Note: Ensure you have a compatible PyTorch version installed for your hardware (CPU or CUDA GPU).*
+
+## Configuration
+
+All parameters for the simulation, model training, evaluation, and file paths are controlled via the main configuration file:
+
+`src/config/config.yaml`
+
+You can modify this file to change:
+* Physical properties (`problem`, `material`, `constants` sections)
+* Simulation settings (`T_max`, `T_surr` range)
+* Neural network architecture (`training -> layers`)
+* Training hyperparameters (`learning_rate`, `epochs`, `batch_sizes`)
+* Evaluation settings (`evaluation -> T_surr_eval`, `grid` resolution)
+* Output paths (`paths`)
+* Execution flags (`run_training`, `run_evaluation`, etc.)
+
+## Usage
+
+To run the full pipeline (training, evaluation, visualization based on the config file), execute the main script from the project root directory:
 
 ```bash
-pip install -r requirements.txt
+python main.py --config src/config/config.yaml
 ```
 
-## 使用方法
+* You can specify a different configuration file using the `--config` argument.
+* The script will:
+    * Load the specified configuration.
+    * Optionally train the model and save it to the path specified in `paths -> model_save`.
+    * Optionally evaluate the trained model for the `T_surr_eval` specified in the config.
+    * Optionally generate and save plots (loss curve, temperature slices) to the paths specified in `paths`.
 
-1. 准备训练数据：
-   - 如果使用模拟数据，程序会自动生成
-   - 如果有实验数据，请放在 `data/raw/` 目录下
+## Dependencies
 
-2. 运行训练：
-   ```bash
-   python main.py
-   ```
+The main dependencies are listed in `requirements.txt`. Key libraries include:
+* PyTorch
+* NumPy
+* Matplotlib
+* PyYAML
 
-3. 查看结果：
-   训练完成后，程序会生成以下可视化文件：
-   - `temperature_field_3d.html`：3D温度场可视化
-   - `temperature_field_xy.html`：XY平面温度分布
-   - `temperature_field_yz.html`：YZ平面温度分布
-   - `temperature_field_xz.html`：XZ平面温度分布
+*(Optional dependencies for advanced visualization like PyVista are noted in `requirements.txt`)*
 
-## 模型说明
+## Results
 
-PINN模型结合了神经网络的拟合能力和物理定律的约束。在这个项目中：
+* Trained models are saved in the `models/` directory (or as configured).
+* Generated plots (loss curves, temperature visualizations) are saved in the `reports/figures/` directory (or as configured).
 
-1. 物理约束：
-   - 热传导方程
-   - 边界条件
-   - 热源功率影响
+*(Add any specific findings or example results here if desired)*
 
-2. 网络结构：
-   - 输入：空间坐标(x,y,z)和加热功率
-   - 输出：温度场
-   - 隐藏层：4层 [64, 64, 64, 32]
-   - 激活函数：Tanh
+## TODO / Future Work
 
-3. 训练参数：
-   - 学习率：0.001
-   - 训练轮次：2000
-   - 采样点数：5000
-
-## 自定义参数
-
-您可以通过修改 `main.py` 中的参数来调整模型：
-
-- `domain_size`：空间域大小
-- `power_range`：功率范围
-- `hidden_layers`：神经网络隐藏层结构
-- `n_points`：训练数据点数
-- `epochs`：训练轮次
-- `learning_rate`：学习率
+* Implement more sophisticated boundary conditions.
+* Allow inference of unknown physical parameters (e.g., $k$, $\epsilon$).
+* Explore different network architectures or activation functions.
+* Add support for more complex geometries.
+* Implement 3D visualization using PyVista.
+* Add comprehensive unit tests.
