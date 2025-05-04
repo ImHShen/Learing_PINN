@@ -10,6 +10,67 @@ The key features include:
 * Applying a non-linear radiative boundary condition on all faces.
 * Parameterizing the model with the surrounding radiative temperature ($T_{surr}$) as an input, allowing prediction for different heating power levels with a single trained model.
 
+## Model Description and Physics
+
+The PINN model learns to approximate the temperature field $u(x, y, z, t, T_{surr})$ by satisfying the underlying physical laws defined by the governing partial differential equation (PDE), initial condition (IC), and boundary conditions (BCs).
+
+**1. Governing Equation (PDE): Heat Equation**
+
+Inside the domain $\Omega = [0, 1]^3$, the temperature evolution due to heat conduction is described by the transient heat equation:
+
+$$ \frac{\partial u}{\partial t} = \alpha \nabla^2 u $$
+
+where:
+* $u$ is the temperature.
+* $t$ is time.
+* $\alpha = k / (\rho c_p)$ is the thermal diffusivity of the material.
+* $\nabla^2 = \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} + \frac{\partial^2}{\partial z^2}$ is the Laplacian operator, representing the spatial curvature of the temperature field which drives diffusion.
+
+**2. Initial Condition (IC)**
+
+At the start of the simulation ($t=0$), the cube is assumed to have a uniform initial temperature $T_0$:
+
+$$ u(x, y, z, 0, T_{surr}) = T_0 $$
+
+This condition specifies the starting state for the time evolution described by the PDE.
+
+**3. Boundary Condition (BC)**
+
+On all six faces of the cube boundary ($\partial \Omega$), heat is exchanged with the surroundings via radiation. The heat flux conducted *out* of the cube normal to the boundary surface must balance the net radiative heat flux *into* the cube from the surroundings (assumed to be at a uniform temperature $T_{surr}$):
+
+$$ -k \nabla u \cdot \mathbf{n} = \epsilon \sigma (T_{surr}^4 - u^4) $$
+
+where:
+* $k$ is the thermal conductivity of the material.
+* $\nabla u$ is the temperature gradient vector.
+* $\mathbf{n}$ is the outward unit normal vector to the boundary surface.
+* $-k \nabla u \cdot \mathbf{n}$ represents the heat flux leaving the domain via conduction ($W/m^2$).
+* $\epsilon$ is the emissivity of the cube's surface.
+* $\sigma$ is the Stefan-Boltzmann constant.
+* $T_{surr}$ is the effective radiative temperature of the surroundings.
+* $u$ is the temperature of the cube's surface at that point.
+* $\epsilon \sigma (T_{surr}^4 - u^4)$ is the net radiative heat flux entering the domain ($W/m^2$).
+
+**4. Key Parameters and Variables**
+
+* $u(x, y, z, t, T_{surr})$: Temperature [K] - The unknown field to be learned by the PINN.
+* $x, y, z$: Spatial coordinates [m].
+* $t$: Time [s].
+* $T_{surr}$: Surrounding radiative temperature [K] - Input parameter representing heating level.
+* $T_0$: Initial temperature [K] - Constant value.
+* $\alpha$: Thermal diffusivity [$m^2/s$] - Material property ($=k/(\rho c_p)$).
+* $k$: Thermal conductivity [$W/(m \cdot K)$] - Material property.
+* $\epsilon$: Surface emissivity [dimensionless, 0 to 1] - Surface property.
+* $\sigma$: Stefan-Boltzmann constant [$5.67 \times 10^{-8} W/(m^2 K^4)$] - Physical constant.
+* $\rho$: Density [$kg/m^3$] - Material property (used to calculate $\alpha$).
+* $c_p$: Specific heat capacity [$J/(kg \cdot K)$] - Material property (used to calculate $\alpha$).
+* $\mathbf{n}$: Outward unit normal vector [dimensionless] - Geometric property of the boundary.
+
+**5. PINN Approach**
+
+The neural network $\hat{u}_{NN}(x, y, z, t, T_{surr}; \theta)$ approximates the true temperature $u$. The network's parameters $\theta$ are optimized by minimizing a loss function composed of the mean squared residuals of the PDE, IC, and BC equations evaluated at sampled collocation points distributed throughout the spatio-temporal-parameter domain. The parameterization with $T_{surr}$ allows the network to learn the temperature field's dependency on the external heating level.
+
+
 ## Project Structure
 
 The project follows a standard machine learning project structure:
