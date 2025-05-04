@@ -46,24 +46,29 @@ LEARNING_PINN
 ├── requirements.txt          # Project dependencies
 └── main.py                   # Main script to execute the pipeline
 ```
+
 ## Setup and Installation
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
+
     ```bash
     git clone <your-repository-url>
     cd ml-project-name
     ```
 
-2.  **Create a virtual environment (Recommended):**
+2. **Create a virtual environment (Recommended):**
+
     ```bash
     python -m venv venv
     source venv/bin/activate  # On Windows use `venv\Scripts\activate`
     ```
 
-3.  **Install dependencies:**
+3. **Install dependencies:**
+
     ```bash
     pip install -r requirements.txt
     ```
+
     *Note: Ensure you have a compatible PyTorch version installed for your hardware (CPU or CUDA GPU).*
 
 ## Configuration
@@ -73,6 +78,7 @@ All parameters for the simulation, model training, evaluation, and file paths ar
 `src/config/config.yaml`
 
 You can modify this file to change:
+
 * Physical properties (`problem`, `material`, `constants` sections)
 * Simulation settings (`T_max`, `T_surr` range)
 * Neural network architecture (`training -> layers`)
@@ -91,14 +97,15 @@ python main.py --config src/config/config.yaml
 
 * You can specify a different configuration file using the `--config` argument.
 * The script will:
-    * Load the specified configuration.
-    * Optionally train the model and save it to the path specified in `paths -> model_save`.
-    * Optionally evaluate the trained model for the `T_surr_eval` specified in the config.
-    * Optionally generate and save plots (loss curve, temperature slices) to the paths specified in `paths`.
+  * Load the specified configuration.
+  * Optionally train the model and save it to the path specified in `paths -> model_save`.
+  * Optionally evaluate the trained model for the `T_surr_eval` specified in the config.
+  * Optionally generate and save plots (loss curve, temperature slices) to the paths specified in `paths`.
 
 ## Dependencies
 
 The main dependencies are listed in `requirements.txt`. Key libraries include:
+
 * PyTorch
 * NumPy
 * Matplotlib
