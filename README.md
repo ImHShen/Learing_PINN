@@ -76,7 +76,7 @@ The neural network $\hat{u}_{NN}(x, y, z, t, T_{surr}; \theta)$ approximates the
 The project follows a standard machine learning project structure:
 
 ```
-LEARNING_PINN
+Learing_PINN
 ├── data/                     # Data files (raw, processed, external)
 ├── models/                   # Saved trained model files (e.g., .pth)
 ├── notebooks/                # Jupyter notebooks for exploration
@@ -113,8 +113,8 @@ LEARNING_PINN
 1. **Clone the repository:**
 
     ```bash
-    git clone <your-repository-url>
-    cd ml-project-name
+    git clone https://github.com/ImHShen/Learing_PINN.git
+    cd Learing_PINN
     ```
 
 2. **Create a virtual environment (Recommended):**
@@ -179,7 +179,6 @@ The main dependencies are listed in `requirements.txt`. Key libraries include:
 * Trained models are saved in the `models/` directory (or as configured).
 * Generated plots (loss curves, temperature visualizations) are saved in the `reports/figures/` directory (or as configured).
 
-*(Add any specific findings or example results here if desired)*
 
 ## TODO / Future Work
 
@@ -189,3 +188,7 @@ The main dependencies are listed in `requirements.txt`. Key libraries include:
 * Add support for more complex geometries.
 * Implement 3D visualization using PyVista.
 * Add comprehensive unit tests.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
